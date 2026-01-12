@@ -1,11 +1,43 @@
 import logging
 import uuid
+import hashlib
 from langchain.tools import tool
 from sqlalchemy import text
 
 from db.database import engine
 
 logger = logging.getLogger(__name__)
+
+
+def get_next_user_id():
+    """
+    Get the next available user_id:
+    - First tries to find an available 2-digit number (10-99)
+    - If all 2-digit numbers are taken, moves to 3-digit (100+)
+    """
+    try:
+        with engine.connect() as conn:
+            query = text("SELECT user_id FROM orders WHERE user_id IS NOT NULL")
+            result = conn.execute(query)
+            existing_ids = set(row[0] for row in result.fetchall())
+
+            logger.info(f"Existing user_ids: {existing_ids}")
+
+            for num in range(10, 100):
+                if num not in existing_ids:
+                    logger.info(f"Found available 2-digit user_id: {num}")
+                    return num
+            next_id = 100
+            while next_id in existing_ids:
+                next_id += 1
+
+            logger.info(f"All 2-digit IDs taken, using 3-digit user_id: {next_id}")
+            return next_id
+
+    except Exception as e:
+        logger.error(f"Error getting next user_id: {e}")
+        return 10
+
 
 @tool("save_order_tool")
 def save_order_tool(order_details: dict):
@@ -21,10 +53,11 @@ def save_order_tool(order_details: dict):
     """
 
     product_name = order_details.get("product_name")
-    user_id = order_details.get("session_id")
+    user_id = get_next_user_id()
     order_id = order_details.get("order_id")
     complaint_text = order_details.get("complaint_text")
     complaint_file_url = order_details.get("complaint_file_url")
+
 
     logger.info(f"save_order_tool called with:")
     logger.info(f"user_id: {user_id}")

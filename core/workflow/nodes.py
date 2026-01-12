@@ -3,7 +3,7 @@ import re
 from langchain_core.prompts import ChatPromptTemplate
 from sqlalchemy import text, inspect
 
-from common.llm import groq_model
+from common.llm import groq_model, gemini_model
 from db.database import engine
 from core.prompts.prompts import INTENT_DETECTION_PROMPT,QUERY_GENERATOR_PROMPT,RESPONSE_FORMATTER_PROMPT
 from core.workflow.schema import RecommendationState
@@ -30,7 +30,7 @@ def intent_detector_node(state: RecommendationState) -> RecommendationState:
     ])
 
     try:
-        chain = prompt | groq_model
+        chain = prompt | gemini_model
         response = chain.invoke({})
         content = response.content.strip()
 
@@ -92,7 +92,7 @@ def generate_query_node(state: RecommendationState) -> RecommendationState:
     ])
 
     try:
-        chain = prompt | groq_model
+        chain = prompt | gemini_model
         response = chain.invoke({
             "user_query": state["user_query"],
             "columns": ", ".join(state["available_columns"]),
@@ -206,7 +206,7 @@ def format_response_node(state: RecommendationState) -> RecommendationState:
     ])
 
     try:
-        chain = prompt | groq_model
+        chain = prompt | gemini_model
         response = chain.invoke({
             "user_query": state["user_query"],
             "results": state["query_results"][:10],

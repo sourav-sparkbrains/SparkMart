@@ -4,7 +4,7 @@ from langchain.agents import create_agent
 from langchain_community.agent_toolkits import SQLDatabaseToolkit
 from langchain.tools import tool
 
-from common.llm import groq_model
+from common.llm import groq_model, gemini_model
 from core.prompts.prompts import GENERAL_QUERY_PROMPT, COMPLAINT_HANDLER_PROMPT,PURCHASE_AGENT_PROMPT
 from db.database import db
 from core.agents.tools import save_order_tool
@@ -18,11 +18,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-toolkit = SQLDatabaseToolkit(db=db, llm=groq_model)
+toolkit = SQLDatabaseToolkit(db=db, llm=gemini_model)
 complaint_tools = toolkit.get_tools() + [save_order_tool]
 
 general_query_agent = create_agent(
-    groq_model,
+    gemini_model,
     tools=[],
     checkpointer=checkpointer,
     store=store,
@@ -30,7 +30,7 @@ general_query_agent = create_agent(
 )
 
 complain_handler_agent = create_agent(
-    groq_model,
+    gemini_model,
     tools=complaint_tools,
     checkpointer=checkpointer,
     store=store,
@@ -38,7 +38,7 @@ complain_handler_agent = create_agent(
 )
 
 purchase_agent = create_agent(
-    groq_model,
+    gemini_model,
     tools=[save_order_tool],
     checkpointer=checkpointer,
     store=store,
@@ -46,7 +46,7 @@ purchase_agent = create_agent(
 )
 
 
-@tool("general_query_tool", return_direct=True)
+@tool("general_query_tool")
 def general_query_tool(request: str, session_id: str) -> str:
     """
     Handle general customer queries such as greetings, store info,
@@ -72,7 +72,7 @@ def general_query_tool(request: str, session_id: str) -> str:
         return "I apologize, but I encountered an error. How else can I help you?"
 
 
-@tool("recommendation_tool", return_direct=True)
+@tool("recommendation_tool")
 def recommendation_tool(request: str, session_id: str) -> str:
     """
     Handle product recommendations, searches, filtering, and guiding users
@@ -139,7 +139,7 @@ def recommendation_tool(request: str, session_id: str) -> str:
         )
 
 
-@tool("purchase_agent_tool", return_direct=True)
+@tool("purchase_agent_tool")
 def purchase_agent_tool(request: str, session_id: str) -> str:
     """
     Handle purchase requests and order placement.
@@ -193,7 +193,7 @@ def purchase_agent_tool(request: str, session_id: str) -> str:
 
 
 
-@tool("complain_handler_tool", return_direct=True)
+@tool("complain_handler_tool")
 def complain_handler_tool(request: str, session_id: str) -> str:
     """
     Handle customer complaints, refund requests, damaged product issues,
