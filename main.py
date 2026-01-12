@@ -8,7 +8,7 @@ from typing import Annotated, Optional
 from pydantic import BaseModel
 
 from core.supervisor_agent import supervisor_agent
-from core.utils.utility_functions import upload_file_to_supabase
+from utils.utility_functions import upload_file_to_supabase
 from db.database import db, engine
 
 app = FastAPI()
